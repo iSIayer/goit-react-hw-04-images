@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Component } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {
@@ -10,50 +10,45 @@ import {
   ButtonLabel,
 } from './SearchBar.styled';
 
-export class Searchbar extends Component {
-  static propTypes = {
-    handleQuery: PropTypes.func.isRequired,
+export function SearchBar({ handleQuery }) {
+  const [query, setQuery] = useState('');
+
+  const handleChange = e => {
+    setQuery(e.target.value.toLowerCase());
   };
 
-  state = {
-    query: '',
-  };
-
-  handleChange = e => {
-    this.setState({ query: e.target.value.toLowerCase() });
-  };
-
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
 
-    if (this.state.query.trim() === '') {
+    if (query.trim() === '') {
       toast.error('Wow so easy !');
       return;
     }
-    this.props.handleQuery(e.currentTarget.elements.query.value);
+    handleQuery(query);
+    setQuery('');
   };
 
-  render() {
-    const { query } = this.state;
+  return (
+    <SearchBarStyled>
+      <SearchForm onSubmit={handleSubmit}>
+        <SearchButton type="submit">
+          <ButtonLabel />
+        </SearchButton>
 
-    return (
-      <SearchBarStyled>
-        <SearchForm onSubmit={this.handleSubmit}>
-          <SearchButton type="submit">
-            <ButtonLabel />
-          </SearchButton>
-
-          <SearchInput
-            name="query"
-            type="text"
-            autocomplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-            value={query}
-            onChange={this.handleChange}
-          />
-        </SearchForm>
-      </SearchBarStyled>
-    );
-  }
+        <SearchInput
+          name="query"
+          type="text"
+          autocomplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+          value={query}
+          onChange={handleChange}
+        />
+      </SearchForm>
+    </SearchBarStyled>
+  );
 }
+
+SearchBar.propTypes = {
+  handleQuery: PropTypes.func.isRequired,
+};

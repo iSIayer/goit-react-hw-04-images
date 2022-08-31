@@ -3,7 +3,7 @@ import { ToastContainer } from 'react-toastify';
 
 import { Button } from './Button';
 import { ImageGallery } from './ImageGallery';
-import { Searchbar } from './SearchBar';
+import { SearchBar } from './SearchBar';
 import { Loader } from './Loader';
 import { Container } from './Container.styled';
 import { fetchImages, isLastPage } from 'services/api';
@@ -99,7 +99,7 @@ export class App extends Component {
     return (
       <>
         <Container>
-          <Searchbar handleQuery={this.handleQuery} />
+          <SearchBar handleQuery={this.handleQuery} />
           {error !== '' && <p className="message">{error}</p>}
           {error === '' && (
             <ImageGallery imgs={images} openModal={this.openModal} />
