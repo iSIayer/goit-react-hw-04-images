@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ToastContainer } from 'react-toastify';
 
 import { Button } from './Button';
@@ -6,53 +6,53 @@ import { ImageGallery } from './ImageGallery';
 import { SearchBar } from './SearchBar';
 import { Loader } from './Loader';
 import { Container } from './Container.styled';
-import { fetchImages, isLastPage } from 'services/api';
+import { fetchImages, isLastPages } from 'services/api';
 import { Modal } from './Modal';
 
-export class App extends Component {
-  state = {
-    images: [],
-    query: '',
-    page: 1,
-    isLastPage: false,
-    error: '',
-    isLoading: false,
-    showModal: false,
-    largeImageURL: '',
-    tags: '',
-  };
+export function App() {
+  const isMount = useRef(false);
 
-  componentDidUpdate(_, prevState) {
-    const { page, query } = this.state;
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLastPage, setIsLastPage] = useState(false);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(0);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [tags, setTags] = useState('');
 
-    if (page !== prevState.page || query !== prevState.query) {
-      this.fetchImages(query, page);
+  useEffect(() => {
+    if (isMount.current) {
+      fetchNewImgs(query, page);
     }
-  }
+    isMount.current = true;
+  }, [page, query]);
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  useEffect(() => {
+    showModalNewWindow(showModal);
+  }, [showModal, images]);
+
+  const handleLoadMore = () => {
+    setPage(page => page + 1);
+    setShowModal(document.documentElement.showModal);
   };
 
-  handleQuery = query => {
-    this.setState(prevState => {
-      if (prevState.query !== query) {
-        return {
-          query,
-          page: 1,
-          images: [],
-          error: '',
-          showModal: false,
-        };
+  const handleQuery = query => {
+    setQuery(prevQuery => {
+      if (prevQuery !== query) {
+        setPage(1);
+        setImages([]);
+        setError('');
+        setShowModal(0);
+        return query;
       }
     });
   };
 
-  fetchImages = async (query = '', page = 1) => {
+  const fetchNewImgs = async (query = '', page = 1) => {
     try {
-      this.setState({ isLoading: true });
+      setIsLoading(true);
 
       const respImages = await fetchImages(query, page);
 
@@ -69,61 +69,51 @@ export class App extends Component {
         })
       );
 
-      this.setState(prevState => ({
-        isLastPage: isLastPage(),
-        images: [...prevState.images, ...newImages],
-      }));
+      setImages(prevImages => [...prevImages, ...newImages]);
+      setIsLastPage(isLastPages());
     } catch (error) {
-      this.setState({
-        error: error.message,
-      });
+      setError(error.message);
     } finally {
-      this.setState({
-        isLoading: false,
-      });
+      setIsLoading(false);
     }
   };
 
-  openModal = (largeImageURL, tags) => {
-    this.setState({ largeImageURL, tags, showModal: true });
+  const openModal = (largeImageURL, tags) => {
+    setLargeImageURL(largeImageURL);
+    setTags(tags);
   };
 
-  closeModal = () => {
-    this.setState({ showModal: false });
+  const closeModal = () => {
+    setLargeImageURL('');
   };
 
-  render() {
-    const { isLastPage, isLoading, images, error, largeImageURL, tags } =
-      this.state;
+  const showModalNewWindow = showModal => {
+    window.scrollBy(showModal, 150);
+  };
 
-    return (
-      <>
-        <Container>
-          <SearchBar handleQuery={this.handleQuery} />
-          {error !== '' && <p className="message">{error}</p>}
-          {error === '' && (
-            <ImageGallery imgs={images} openModal={this.openModal} />
-          )}
-          {isLoading && <Loader />}
-          {!isLoading &&
-            error === '' &&
-            (isLastPage ? (
-              <p className="no-images">No more content</p>
-            ) : (
-              images.length !== 0 && (
-                <Button handleClick={this.handleLoadMore} />
-              )
-            ))}
-          {this.state.showModal && (
-            <Modal
-              onClose={this.closeModal}
-              largeImageURL={largeImageURL}
-              tags={tags}
-            />
-          )}
-          <ToastContainer autoClose={3000} />
-        </Container>
-      </>
-    );
-  }
+  return (
+    <>
+      <Container>
+        <SearchBar handleQuery={handleQuery} />
+        {error !== '' && <p className="message">{error}</p>}
+        {error === '' && <ImageGallery imgs={images} openModal={openModal} />}
+        {isLoading && <Loader />}
+        {!isLoading &&
+          error === '' &&
+          (isLastPage ? (
+            <p className="no-images">No more content</p>
+          ) : (
+            images.length !== 0 && <Button handleClick={handleLoadMore} />
+          ))}
+        {largeImageURL && (
+          <Modal
+            onClose={closeModal}
+            largeImageURL={largeImageURL}
+            tags={tags}
+          />
+        )}
+        <ToastContainer autoClose={3000} />
+      </Container>
+    </>
+  );
 }

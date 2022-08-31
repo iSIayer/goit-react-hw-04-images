@@ -30,8 +30,8 @@ async function fetchImages(query = '', page = 1) {
     .catch(error => console.log('error', error));
 }
 
-function isLastPage() {
+function isLastPages() {
   return lastPage;
 }
 
-export { fetchImages, isLastPage };
+export { fetchImages, isLastPages };
